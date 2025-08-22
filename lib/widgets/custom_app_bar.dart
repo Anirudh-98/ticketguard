@@ -97,6 +97,7 @@ class CustomHomeAppBar extends StatelessWidget implements PreferredSizeWidget {
     final theme = Theme.of(context);
 
     return AppBar(
+      automaticallyImplyLeading: false,
       title: Row(
         children: [
           Container(
@@ -149,7 +150,16 @@ class CustomHomeAppBar extends StatelessWidget implements PreferredSizeWidget {
           children: [
             IconButton(
               icon: const Icon(Icons.notifications_outlined),
-              onPressed: onNotificationTap,
+              onPressed: onNotificationTap ??
+                  () {
+                    // Navigate to notifications or show notification panel
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('New notifications available!'),
+                        duration: Duration(seconds: 2),
+                      ),
+                    );
+                  },
               tooltip: 'Notifications',
             ),
             if (notificationCount > 0)

@@ -31,46 +31,114 @@ class _TicketDetailScreenState extends State<TicketDetailScreen> {
   }
 
   void _loadTicketData() {
-    // Get arguments passed from navigation
-    final args =
-        ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
+    try {
+      // Get arguments passed from navigation with better error handling
+      final args = ModalRoute.of(context)?.settings.arguments;
 
-    // Mock ticket data - in real app this would come from API/database
-    setState(() {
-      ticketData = args ??
-          {
-            'eventId': 'evt_001',
-            'eventName': 'Taylor Swift | The Eras Tour',
-            'eventImage':
-                'https://images.unsplash.com/photo-1540039155733-5bb30b53aa14?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2274&q=80',
-            'eventDate': 'Saturday, March 15, 2025',
-            'eventTime': '7:30 PM',
-            'location': 'Madison Square Garden',
-            'venue': 'Madison Square Garden, New York, NY',
-            'section': 'Section 102',
-            'row': 'Row 12',
-            'seat': 'Seats 5-6',
-            'quantity': 2,
-            'originalPrice': '\$450.00',
-            'currentPrice': '\$380.00',
-            'isDiscounted': true,
-            'sellerId': 'usr_001',
-            'sellerName': 'Sarah Johnson',
-            'sellerImage':
-                'https://images.unsplash.com/photo-1494790108755-2616b612b786?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=687&q=80',
-            'isVerified': true,
-            'rating': 4.8,
-            'memberSince': 'March 2020',
-            'responseTime': 'Usually responds within 1 hour',
-            'successfulSales': 47,
-            'description':
-                'Amazing seats with great view of the stage! I can\'t make it to the show anymore due to a work conflict. These are legitimate tickets purchased through official channels. Will provide proof of purchase.',
-            'transferPolicy':
-                'Mobile tickets will be transferred through official platform. Seller guarantees authenticity.',
-            'isFeatured': false,
-          };
-      isLoading = false;
-    });
+      Map<String, dynamic> receivedData = {};
+
+      // Handle different argument types safely
+      if (args is Map<String, dynamic>) {
+        receivedData = Map<String, dynamic>.from(args);
+      } else if (args is Map) {
+        // Convert Map to Map<String, dynamic>
+        receivedData = args.cast<String, dynamic>();
+      }
+
+      // Enhanced mock ticket data with fallbacks for all required fields
+      setState(() {
+        ticketData = {
+          // Use received data or fallback to mock data
+          'eventId': receivedData['id']?.toString() ?? 'evt_001',
+          'eventName':
+              receivedData['eventName'] ?? 'Taylor Swift | The Eras Tour',
+          'eventImage': receivedData['eventImage'] ??
+              'https://images.unsplash.com/photo-1540039155733-5bb30b53aa14?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2274&q=80',
+          'eventDate': receivedData['eventDate'] ?? 'Saturday, March 15, 2025',
+          'eventTime': receivedData['eventTime'] ?? '7:30 PM',
+          'location': receivedData['location'] ?? 'Madison Square Garden',
+          'venue': receivedData['venue'] ??
+              receivedData['location'] ??
+              'Madison Square Garden, New York, NY',
+          'section': receivedData['section'] ?? 'Section 102',
+          'row': receivedData['row'] ?? 'Row 12',
+          'seat': receivedData['seat'] ?? 'Seats 5-6',
+          'quantity': receivedData['quantity'] ?? 2,
+          'originalPrice': receivedData['originalPrice'] ?? '\$450.00',
+          'currentPrice': receivedData['price'] ??
+              receivedData['currentPrice'] ??
+              '\$380.00',
+          'isDiscounted': receivedData['isDiscounted'] ?? true,
+          'sellerId': receivedData['sellerId'] ?? 'usr_001',
+          'sellerName': receivedData['sellerName'] ?? 'Sarah Johnson',
+          'sellerImage': receivedData['sellerImage'] ??
+              'https://images.unsplash.com/photo-1494790108755-2616b612b786?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=687&q=80',
+          'isVerified': receivedData['isSellerVerified'] ??
+              receivedData['isVerified'] ??
+              true,
+          'rating': receivedData['rating']?.toDouble() ?? 4.8,
+          'memberSince': receivedData['memberSince'] ?? 'March 2020',
+          'responseTime':
+              receivedData['responseTime'] ?? 'Usually responds within 1 hour',
+          'successfulSales': receivedData['successfulSales'] ?? 47,
+          'description': receivedData['description'] ??
+              'Amazing seats with great view of the stage! I can\'t make it to the show anymore due to a work conflict. These are legitimate tickets purchased through official channels. Will provide proof of purchase.',
+          'transferPolicy': receivedData['transferPolicy'] ??
+              'Mobile tickets will be transferred through official platform. Seller guarantees authenticity.',
+          'isFeatured': receivedData['isFeatured'] ?? false,
+        };
+        isLoading = false;
+      });
+    } catch (e) {
+      // Handle any errors during data loading
+      print('Error loading ticket data: $e');
+      setState(() {
+        // Provide complete fallback data
+        ticketData = {
+          'eventId': 'evt_fallback',
+          'eventName': 'Event Details',
+          'eventImage':
+              'https://images.unsplash.com/photo-1540039155733-5bb30b53aa14?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2274&q=80',
+          'eventDate': 'Date TBD',
+          'eventTime': 'Time TBD',
+          'location': 'Venue TBD',
+          'venue': 'Venue TBD',
+          'section': 'Section TBD',
+          'row': 'Row TBD',
+          'seat': 'Seat TBD',
+          'quantity': 1,
+          'originalPrice': '\$0.00',
+          'currentPrice': '\$0.00',
+          'isDiscounted': false,
+          'sellerId': 'unknown',
+          'sellerName': 'Unknown Seller',
+          'sellerImage':
+              'https://images.unsplash.com/photo-1494790108755-2616b612b786?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=687&q=80',
+          'isVerified': false,
+          'rating': 0.0,
+          'memberSince': 'Unknown',
+          'responseTime': 'Response time unknown',
+          'successfulSales': 0,
+          'description': 'No description available.',
+          'transferPolicy': 'Transfer policy not available.',
+          'isFeatured': false,
+        };
+        isLoading = false;
+      });
+
+      // Show error message to user
+      Future.delayed(Duration.zero, () {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Some ticket details may be unavailable'),
+              backgroundColor: Colors.orange,
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        }
+      });
+    }
   }
 
   void _handleBackPressed() {

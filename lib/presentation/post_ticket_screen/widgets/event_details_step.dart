@@ -166,9 +166,13 @@ class _EventDetailsStepState extends State<EventDetailsStep> {
             },
             fieldViewBuilder:
                 (context, controller, focusNode, onFieldSubmitted) {
-              _eventNameController.text = controller.text;
+              // Fix: Don't reassign the controller text, just sync it properly
+              if (_eventNameController.text != controller.text) {
+                controller.text = _eventNameController.text;
+              }
+
               return TextFormField(
-                controller: _eventNameController,
+                controller: controller, // Use the provided controller
                 focusNode: focusNode,
                 decoration: InputDecoration(
                   hintText: 'e.g., Taylor Swift - The Eras Tour',
@@ -182,7 +186,11 @@ class _EventDetailsStepState extends State<EventDetailsStep> {
                     ),
                   ),
                 ),
-                onChanged: (value) => _validateAndUpdate(),
+                onChanged: (value) {
+                  // Update our main controller when the field changes
+                  _eventNameController.text = value;
+                  _validateAndUpdate();
+                },
               );
             },
           ),

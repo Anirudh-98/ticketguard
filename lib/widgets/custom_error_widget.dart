@@ -1,9 +1,8 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/svg.dart';
+import 'package:sizer/sizer.dart';
 
 import '../core/app_export.dart';
-
-// custom_error_widget.dart
 
 class CustomErrorWidget extends StatelessWidget {
   final FlutterErrorDetails? errorDetails;
@@ -17,68 +16,182 @@ class CustomErrorWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDarkMode = theme.brightness == Brightness.dark;
+
     return Scaffold(
-      backgroundColor: const Color(0xFFFAFAFA),
+      backgroundColor:
+          isDarkMode ? const Color(0xFF1A1A1A) : const Color(0xFFF8F9FA),
       body: SafeArea(
-          child: Center(
-        child: Padding(
-          padding: const EdgeInsets.all(24.0),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              SvgPicture.asset(
-                'assets/images/sad_face.svg',
-                height: 42,
-                width: 42,
-              ),
-              const SizedBox(height: 8),
-              Text(
-                "Something went wrong",
-                style: const TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.w500,
-                  color: Color(0xFF262626),
+        child: Center(
+          child: Padding(
+            padding: EdgeInsets.all(6.w),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                // Error icon
+                Container(
+                  width: 20.w,
+                  height: 20.w,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFFF6B6B).withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(10.w),
+                  ),
+                  child: Center(
+                    child: CustomIconWidget(
+                      iconName: 'error_outline',
+                      size: 10.w,
+                      color: const Color(0xFFFF6B6B),
+                    ),
+                  ),
                 ),
-              ),
-              const SizedBox(height: 4),
-              SizedBox(
-                child: const Text(
-                  'We encountered an unexpected error while processing your request.',
+
+                SizedBox(height: 4.h),
+
+                // Error title
+                Text(
+                  'Something went wrong',
                   textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 16,
-                    color: Color(0xFF525252), // neutral-600
+                  style: theme.textTheme.headlineSmall?.copyWith(
+                    fontWeight: FontWeight.w600,
+                    color: isDarkMode
+                        ? const Color(0xFFFFFFFF)
+                        : const Color(0xFF1A1A1A),
                   ),
                 ),
-              ),
-              const SizedBox(height: 24),
-              ElevatedButton.icon(
-                onPressed: () {
-                  bool canBeBack = Navigator.canPop(context);
-                  if (canBeBack) {
-                    Navigator.of(context).pop();
-                  } else {
-                    Navigator.pushNamed(context, AppRoutes.initial);
-                  }
-                },
-                icon:
-                    const Icon(Icons.arrow_back, size: 18, color: Colors.white),
-                label: const Text('Back'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppTheme.lightTheme.primaryColor,
-                  foregroundColor: Colors.white,
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
+
+                SizedBox(height: 2.h),
+
+                // Error description
+                Text(
+                  'We encountered an unexpected error. Please try going back and trying again.',
+                  textAlign: TextAlign.center,
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: isDarkMode
+                        ? const Color(0xFFB0B0B0)
+                        : const Color(0xFF64748B),
+                    height: 1.5,
                   ),
                 ),
-              ),
-            ],
+
+                SizedBox(height: 4.h),
+
+                // Action buttons
+                Column(
+                  children: [
+                    SizedBox(
+                      width: double.infinity,
+                      height: 6.h,
+                      child: ElevatedButton(
+                        onPressed: () {
+                          // Try to navigate back safely
+                          try {
+                            if (Navigator.of(context).canPop()) {
+                              Navigator.of(context).pop();
+                            } else {
+                              Navigator.of(context)
+                                  .pushReplacementNamed(AppRoutes.home);
+                            }
+                          } catch (e) {
+                            // If all else fails, go to home
+                            Navigator.of(context).pushNamedAndRemoveUntil(
+                              AppRoutes.home,
+                              (route) => false,
+                            );
+                          }
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppTheme.primaryBlue,
+                          foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                        ),
+                        child: const Text(
+                          'Go Back',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ),
+                    ),
+                    SizedBox(height: 2.h),
+                    SizedBox(
+                      width: double.infinity,
+                      height: 6.h,
+                      child: OutlinedButton(
+                        onPressed: () {
+                          try {
+                            Navigator.of(context).pushNamedAndRemoveUntil(
+                              AppRoutes.home,
+                              (route) => false,
+                            );
+                          } catch (e) {
+                            // Force reload the app if needed
+                            Navigator.of(context)
+                                .pushReplacementNamed(AppRoutes.initial);
+                          }
+                        },
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: isDarkMode
+                              ? const Color(0xFFFFFFFF)
+                              : const Color(0xFF1A1A1A),
+                          side: BorderSide(
+                            color: AppTheme.primaryBlue.withValues(alpha: 0.3),
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                        ),
+                        child: const Text(
+                          'Go to Home',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+
+                // Debug info (only in debug mode)
+                if (kDebugMode && errorDetails != null) ...[
+                  SizedBox(height: 4.h),
+                  ExpansionTile(
+                    title: Text(
+                      'Debug Info',
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: Colors.grey,
+                      ),
+                    ),
+                    children: [
+                      Container(
+                        width: double.infinity,
+                        padding: EdgeInsets.all(3.w),
+                        margin: EdgeInsets.all(2.w),
+                        decoration: BoxDecoration(
+                          color: Colors.grey.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Text(
+                          errorDetails.toString(),
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            fontFamily: 'monospace',
+                            fontSize: 10,
+                            color: Colors.grey[700],
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ],
+            ),
           ),
         ),
-      )),
+      ),
     );
   }
 }

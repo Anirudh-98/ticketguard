@@ -195,8 +195,44 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void _onTicketTap(Map<String, dynamic> ticketData) {
-    // Navigate to ticket detail with hero animation
-    // Navigator.pushNamed(context, '/ticket-detail', arguments: ticketData);
+    try {
+      // Validate ticket data before navigation
+      if (ticketData.isEmpty || ticketData['id'] == null) {
+        _showErrorSnackBar('Ticket data is not available');
+        return;
+      }
+
+      // Create a safe copy of ticket data with fallbacks
+      final safeTicketData = Map<String, dynamic>.from(ticketData);
+
+      // Ensure required fields have fallback values
+      safeTicketData['eventName'] = safeTicketData['eventName'] ?? 'Event Name';
+      safeTicketData['eventDate'] = safeTicketData['eventDate'] ?? 'Date TBD';
+      safeTicketData['eventTime'] = safeTicketData['eventTime'] ?? 'Time TBD';
+      safeTicketData['location'] = safeTicketData['location'] ?? 'Location TBD';
+      safeTicketData['venue'] =
+          safeTicketData['venue'] ?? safeTicketData['location'] ?? 'Venue TBD';
+      safeTicketData['price'] = safeTicketData['price'] ?? '\$0';
+      safeTicketData['sellerName'] =
+          safeTicketData['sellerName'] ?? 'Unknown Seller';
+      safeTicketData['isSellerVerified'] =
+          safeTicketData['isSellerVerified'] ?? false;
+
+      // Navigate to ticket detail with safe data
+      Navigator.pushNamed(
+        context,
+        AppRoutes.ticketDetailScreen,
+        arguments: safeTicketData,
+      ).catchError((error) {
+        // Handle navigation errors
+        _showErrorSnackBar('Unable to open ticket details');
+        print('Navigation error: $error');
+      });
+    } catch (e) {
+      // Handle any unexpected errors during navigation
+      _showErrorSnackBar('Something went wrong while opening ticket');
+      print('Ticket tap error: $e');
+    }
   }
 
   void _onTicketLongPress(
@@ -251,6 +287,71 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  void _showErrorSnackBar(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: Colors.red,
+        behavior: SnackBarBehavior.floating,
+        duration: const Duration(seconds: 3),
+      ),
+    );
+  }
+
+  Widget _buildNotificationItem(String title, String time) {
+    return Container(
+      padding: EdgeInsets.symmetric(vertical: 2.h, horizontal: 3.w),
+      decoration: BoxDecoration(
+        border: Border(
+          bottom: BorderSide(
+            color: AppTheme.borderSubtle,
+            width: 0.5,
+          ),
+        ),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 8.w,
+            height: 8.w,
+            decoration: BoxDecoration(
+              color: AppTheme.primaryBlue.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(4.w),
+            ),
+            child: Center(
+              child: CustomIconWidget(
+                iconName: 'notifications',
+                color: AppTheme.primaryBlue,
+                size: 16,
+              ),
+            ),
+          ),
+          SizedBox(width: 3.w),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: AppTheme.lightTheme.textTheme.bodyMedium?.copyWith(
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                SizedBox(height: 0.5.h),
+                Text(
+                  time,
+                  style: AppTheme.lightTheme.textTheme.bodySmall?.copyWith(
+                    color: AppTheme.textSecondary,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   void _onBottomNavTap(int index) {
     setState(() => _currentBottomNavIndex = index);
   }
@@ -259,8 +360,55 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: CustomHomeAppBar(
-        onSearchTap: () => Navigator.pushNamed(context, '/search-screen'),
-        onNotificationTap: () => _showSnackBar('Notifications opened'),
+        onSearchTap: () => Navigator.pushNamed(context, AppRoutes.search),
+        onNotificationTap: () {
+          // Show actual notifications with count
+          showDialog(
+            context: context,
+            builder: (BuildContext context) => AlertDialog(
+              title: Row(
+                children: [
+                  CustomIconWidget(
+                    iconName: 'notifications',
+                    color: AppTheme.primaryBlue,
+                    size: 24,
+                  ),
+                  SizedBox(width: 2.w),
+                  const Text('Notifications'),
+                ],
+              ),
+              content: SizedBox(
+                width: double.maxFinite,
+                child: ListView(
+                  shrinkWrap: true,
+                  children: [
+                    _buildNotificationItem(
+                        'New message from buyer', '2 min ago'),
+                    _buildNotificationItem(
+                        'Price drop alert: Lakers vs Warriors', '1 hour ago'),
+                    _buildNotificationItem(
+                        'Your ticket listing was viewed 5 times',
+                        '3 hours ago'),
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text('Close'),
+                ),
+                ElevatedButton(
+                  onPressed: () {
+                    Navigator.pop(context);
+                    // Mark all as read
+                    setState(() => _notificationCount = 0);
+                  },
+                  child: const Text('Mark All Read'),
+                ),
+              ],
+            ),
+          );
+        },
         notificationCount: _notificationCount,
       ),
       body: SafeArea(
